@@ -1,0 +1,202 @@
+import React, { useState, useEffect } from "react";
+import { MessageCircle } from "lucide-react";
+import Markdown from "react-markdown";
+import { cn } from "../utils/cn";
+import { Message, RepoData } from "../types";
+import { generateRepoAnalysis } from "../services/github";
+
+interface ChatContentProps {
+	repoData: RepoData | null;
+	isInitializing: boolean;
+}
+
+export function ChatContent({ repoData, isInitializing }: ChatContentProps) {
+	const [messages, setMessages] = useState<Message[]>([
+		{
+			id: "1",
+			content: `你好！我是**RepoReader助手**，正在分析当前GitHub项目...
+
+🔍 **正在获取项目信息**
+- 📄 README文档
+- 📁 项目结构  
+- 🏷️ 技术栈识别
+
+请稍候...`,
+			role: "assistant",
+			timestamp: new Date(),
+		},
+	]);
+	const [inputValue, setInputValue] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
+
+	// 当仓库数据加载完成时，发送初始分析消息
+	useEffect(() => {
+		if (repoData && !isInitializing) {
+			const analysisMessage: Message = {
+				id: "analysis-" + Date.now(),
+				content: generateRepoAnalysis(repoData),
+				role: "assistant",
+				timestamp: new Date(),
+			};
+
+			setMessages([
+				{
+					id: "1",
+					content: `你！我是**RepoReader助手**，我已经分析了当前的GitHub项目。
+
+✅ **分析完成！** 你可以向我询问关于这个项目的任何问题。`,
+					role: "assistant",
+					timestamp: new Date(),
+				},
+				analysisMessage,
+			]);
+		}
+	}, [repoData, isInitializing]);
+
+	const handleSend = async () => {
+		if (!inputValue.trim() || isLoading) return;
+
+		const userMessage: Message = {
+			id: Date.now().toString(),
+			content: inputValue,
+			role: "user",
+			timestamp: new Date(),
+		};
+
+		setMessages((prev) => [...prev, userMessage]);
+		setInputValue("");
+		setIsLoading(true);
+
+		// 模拟AI回复
+		setTimeout(() => {
+			const assistantMessage: Message = {
+				id: (Date.now() + 1).toString(),
+				content: `我收到了你的消息：**"${userMessage.content}"**
+
+这是一个模拟回复，实际使用时会调用配置的AI模型来生成回复。
+
+### 功能演示
+- ✅ **Markdown渲染**支持
+- 🎨 **代码高亮**：\`console.log('Hello')\`
+- 📝 **列表格式**
+- 🔗 **链接支持**
+
+\`\`\`javascript
+// 代码块示例
+function analyzeRepo(data) {
+  return data.structure.length;
+}
+\`\`\``,
+				role: "assistant",
+				timestamp: new Date(),
+			};
+			setMessages((prev) => [...prev, assistantMessage]);
+			setIsLoading(false);
+		}, 1000);
+	};
+
+	return (
+		<div className="flex flex-col flex-1">
+			{/* 消息列表 */}
+			<div className="flex-1 overflow-y-auto p-4 space-y-4">
+				{messages.map((message) => (
+					<div
+						key={message.id}
+						className={cn(
+							"flex gap-3",
+							message.role === "user" ? "justify-end" : "justify-start"
+						)}
+					>
+						{message.role === "assistant" && (
+							<div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+								<MessageCircle className="w-4 h-4 text-blue-600" />
+							</div>
+						)}
+
+						<div
+							className={cn(
+								"max-w-[240px] rounded-lg px-3 py-2 text-sm",
+								message.role === "user"
+									? "bg-blue-600 text-white"
+									: "bg-gray-100 text-gray-900"
+							)}
+						>
+							{message.role === "assistant" ? (
+								<div
+									className={cn(
+										"prose prose-sm max-w-none",
+										"prose-headings:text-gray-900 prose-headings:font-semibold",
+										"prose-p:text-gray-900 prose-p:leading-relaxed",
+										"prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1 prose-code:rounded",
+										"prose-pre:bg-gray-800 prose-pre:text-gray-100",
+										"prose-blockquote:border-l-blue-500 prose-blockquote:text-gray-700",
+										"prose-strong:text-gray-900 prose-strong:font-semibold",
+										"prose-ul:text-gray-900 prose-ol:text-gray-900",
+										"prose-li:text-gray-900"
+									)}
+								>
+									<Markdown>{message.content}</Markdown>
+								</div>
+							) : (
+								<p className="text-white">{message.content}</p>
+							)}
+						</div>
+
+						{message.role === "user" && (
+							<div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+								<div className="w-4 h-4 text-gray-600">👤</div>
+							</div>
+						)}
+					</div>
+				))}
+
+				{isLoading && (
+					<div className="flex gap-3 justify-start">
+						<div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+							<MessageCircle className="w-4 h-4 text-blue-600" />
+						</div>
+						<div className="bg-gray-100 rounded-lg px-3 py-2 text-sm">
+							<div className="flex gap-1">
+								<div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+								<div
+									className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+									style={{ animationDelay: "0.1s" }}
+								></div>
+								<div
+									className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+									style={{ animationDelay: "0.2s" }}
+								></div>
+							</div>
+						</div>
+					</div>
+				)}
+			</div>
+
+			{/* 输入区域 */}
+			<div className="p-4 border-t border-gray-200">
+				<div className="flex gap-2">
+					<input
+						value={inputValue}
+						onChange={(e) => setInputValue(e.target.value)}
+						onKeyPress={(e) => {
+							if (e.key === "Enter" && !e.shiftKey) {
+								e.preventDefault();
+								handleSend();
+							}
+						}}
+						placeholder="输入你的问题..."
+						className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+						disabled={isLoading}
+					/>
+					<button
+						onClick={handleSend}
+						disabled={!inputValue.trim() || isLoading}
+						className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						发送
+					</button>
+				</div>
+			</div>
+		</div>
+	);
+}
