@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MessageCircle } from "lucide-react";
 import Markdown from "react-markdown";
 import { cn } from "../utils/cn";
 import { Message, RepoData } from "../types";
 import { generateRepoAnalysis } from "../services/github";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
+import { useSettingsStore } from "../stores/settingsStore";
+import { sendChatRequest, parseStreamResponse } from "../services/chat";
 
 interface ChatContentProps {
 	repoData: RepoData | null;
@@ -28,6 +32,10 @@ export function ChatContent({ repoData, isInitializing }: ChatContentProps) {
 	]);
 	const [inputValue, setInputValue] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+	const messagesEndRef = useRef<HTMLDivElement>(null);
+	
+	const { apiKey, selectedModel, userProfile, knowledgeBase } = useSettingsStore();
 
 	// 当仓库数据加载完成时，发送初始分析消息
 	useEffect(() => {
@@ -42,7 +50,7 @@ export function ChatContent({ repoData, isInitializing }: ChatContentProps) {
 			setMessages([
 				{
 					id: "1",
-					content: `你！我是**RepoReader助手**，我已经分析了当前的GitHub项目。
+					content: `你好！我是**RepoReader助手**，我已经分析了当前的GitHub项目。
 
 ✅ **分析完成！** 你可以向我询问关于这个项目的任何问题。`,
 					role: "assistant",
@@ -56,6 +64,12 @@ export function ChatContent({ repoData, isInitializing }: ChatContentProps) {
 	const handleSend = async () => {
 		if (!inputValue.trim() || isLoading) return;
 
+		// 检查API配置
+		if (!apiKey || !selectedModel) {
+			alert("请先在设置中配置API Key和模型！");
+			return;
+		}
+
 		const userMessage: Message = {
 			id: Date.now().toString(),
 			content: inputValue,
@@ -67,36 +81,66 @@ export function ChatContent({ repoData, isInitializing }: ChatContentProps) {
 		setInputValue("");
 		setIsLoading(true);
 
-		// 模拟AI回复
-		setTimeout(() => {
-			const assistantMessage: Message = {
-				id: (Date.now() + 1).toString(),
-				content: `我收到了你的消息：**"${userMessage.content}"**
+		// 创建助手消息用于流式输出
+		const assistantMessageId = (Date.now() + 1).toString();
+		const assistantMessage: Message = {
+			id: assistantMessageId,
+			content: "",
+			role: "assistant",
+			timestamp: new Date(),
+		};
 
-这是一个模拟回复，实际使用时会调用配置的AI模型来生成回复。
+		setMessages((prev) => [...prev, assistantMessage]);
+		setStreamingMessageId(assistantMessageId);
 
-### 功能演示
-- ✅ **Markdown渲染**支持
-- 🎨 **代码高亮**：\`console.log('Hello')\`
-- 📝 **列表格式**
-- 🔗 **链接支持**
+		try {
+			// 发送请求到AI API
+			const stream = await sendChatRequest(apiKey, {
+				message: userMessage.content,
+				repoData,
+				userProfile,
+				knowledgeBase,
+			});
 
-\`\`\`javascript
-// 代码块示例
-function analyzeRepo(data) {
-  return data.structure.length;
-}
-\`\`\``,
-				role: "assistant",
-				timestamp: new Date(),
-			};
-			setMessages((prev) => [...prev, assistantMessage]);
+			// 处理流式响应
+			let fullContent = "";
+			for await (const chunk of parseStreamResponse(stream)) {
+				fullContent += chunk;
+				
+				// 更新消息内容
+				setMessages((prev) =>
+					prev.map((msg) =>
+						msg.id === assistantMessageId
+							? { ...msg, content: fullContent }
+							: msg
+					)
+				);
+			}
+		} catch (error) {
+			console.error("发送消息失败:", error);
+			
+			// 显示错误消息
+			const errorMessage = error instanceof Error ? error.message : "发送消息失败，请检查网络连接和API配置";
+			setMessages((prev) =>
+				prev.map((msg) =>
+					msg.id === assistantMessageId
+						? { ...msg, content: `❌ **错误**: ${errorMessage}` }
+						: msg
+				)
+			);
+		} finally {
 			setIsLoading(false);
-		}, 1000);
+			setStreamingMessageId(null);
+		}
 	};
 
+	// 自动滚动到底部
+	useEffect(() => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [messages]);
+
 	return (
-		<div className="flex flex-col flex-1">
+		<div className="flex flex-col h-full">
 			{/* 消息列表 */}
 			<div className="flex-1 overflow-y-auto p-4 space-y-4">
 				{messages.map((message) => (
@@ -118,7 +162,8 @@ function analyzeRepo(data) {
 								"max-w-[240px] rounded-lg px-3 py-2 text-sm",
 								message.role === "user"
 									? "bg-blue-600 text-white"
-									: "bg-gray-100 text-gray-900"
+									: "bg-gray-100 text-gray-900",
+								streamingMessageId === message.id && "animate-pulse"
 							)}
 						>
 							{message.role === "assistant" ? (
@@ -150,7 +195,7 @@ function analyzeRepo(data) {
 					</div>
 				))}
 
-				{isLoading && (
+				{isLoading && !streamingMessageId && (
 					<div className="flex gap-3 justify-start">
 						<div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
 							<MessageCircle className="w-4 h-4 text-blue-600" />
@@ -170,12 +215,13 @@ function analyzeRepo(data) {
 						</div>
 					</div>
 				)}
+				<div ref={messagesEndRef} />
 			</div>
 
 			{/* 输入区域 */}
 			<div className="p-4 border-t border-gray-200">
 				<div className="flex gap-2">
-					<input
+					<Input
 						value={inputValue}
 						onChange={(e) => setInputValue(e.target.value)}
 						onKeyPress={(e) => {
@@ -185,16 +231,16 @@ function analyzeRepo(data) {
 							}
 						}}
 						placeholder="输入你的问题..."
-						className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+						className="flex-1"
 						disabled={isLoading}
 					/>
-					<button
+					<Button
+						variant={"outline"}
 						onClick={handleSend}
 						disabled={!inputValue.trim() || isLoading}
-						className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						发送
-					</button>
+					</Button>
 				</div>
 			</div>
 		</div>

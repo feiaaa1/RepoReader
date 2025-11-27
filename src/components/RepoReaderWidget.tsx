@@ -5,6 +5,8 @@ import { RepoData } from "../types";
 import { initializeRepoData } from "../services/github";
 import { ChatContent } from "./ChatContent";
 import { SettingsContent } from "./SettingsContent";
+import { Button } from "./ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 
 export function RepoReaderWidget() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -58,12 +60,13 @@ export function RepoReaderWidget() {
 		<>
 			{/* 悬浮按钮 */}
 			<div className="fixed top-4 right-4 z-50">
-				<button
+				<Button
 					onClick={() => handleToggle(!isOpen)}
+					variant="outline"
+					size="icon"
 					className={cn(
-						"group relative bg-white text-black shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out",
-						"rounded-full w-12 h-6 flex items-center justify-center",
-						"border border-gray-200 hover:border-gray-300",
+						"group relative shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out",
+						"rounded-full w-12 h-6",
 						"transform hover:scale-105 active:scale-95",
 						isOpen && "shadow-xl scale-105",
 						isInitializing && "animate-pulse"
@@ -84,7 +87,7 @@ export function RepoReaderWidget() {
 						</div>
 						<div className="absolute left-full top-1/2 -translate-y-1/2 border-4 border-transparent border-l-gray-900"></div>
 					</div>
-				</button>
+				</Button>
 			</div>
 
 			{/* 主对话框 - 添加缩放动画 */}
@@ -98,60 +101,57 @@ export function RepoReaderWidget() {
 				)}
 			>
 				<div className="bg-white rounded-lg shadow-2xl border border-gray-200 w-80 h-[700px] flex flex-col">
-					{/* Tab导航 */}
-					<div className="flex items-center justify-between p-4 border-b border-gray-200">
-						<div className="flex bg-gray-100 rounded-lg p-1">
-							<button
-								onClick={() => setActiveTab("chat")}
-								className={cn(
-									"flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-									activeTab === "chat"
-										? "bg-white text-gray-900 shadow-sm"
-										: "text-gray-600 hover:text-gray-900"
-								)}
+					<Tabs
+						value={activeTab}
+						onValueChange={setActiveTab}
+						className="flex flex-col h-full"
+					>
+						{/* Tab导航 */}
+						<div className="flex items-center justify-between p-4 border-b border-gray-200">
+							<TabsList>
+								<TabsTrigger value="chat">
+									<MessageCircle className="w-4 h-4" />
+									对话
+								</TabsTrigger>
+								<TabsTrigger value="settings">
+									<Settings className="w-4 h-4" />
+									设置
+								</TabsTrigger>
+							</TabsList>
+							<Button
+								onClick={handleClose}
+								variant="ghost"
+								size="icon-sm"
+								className="ml-2 text-gray-400 hover:text-gray-600"
+								aria-label="关闭"
 							>
-								<MessageCircle className="w-4 h-4" />
-								对话
-							</button>
-							<button
-								onClick={() => setActiveTab("settings")}
-								className={cn(
-									"flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-									activeTab === "settings"
-										? "bg-white text-gray-900 shadow-sm"
-										: "text-gray-600 hover:text-gray-900"
-								)}
-							>
-								<Settings className="w-4 h-4" />
-								设置
-							</button>
+								<svg
+									className="w-5 h-5"
+									fill="none"
+									stroke="currentColor"
+									viewBox="0 0 24 24"
+								>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										strokeWidth={2}
+										d="M6 18L18 6M6 6l12 12"
+									/>
+								</svg>
+							</Button>
 						</div>
-						<button
-							onClick={handleClose}
-							className="ml-2 text-gray-400 hover:text-gray-600 transition-colors"
-							aria-label="关闭"
-						>
-							<svg
-								className="w-5 h-5"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M6 18L18 6M6 6l12 12"
-								/>
-							</svg>
-						</button>
-					</div>
 
-					{/* Tab内容 */}
-					{activeTab === "chat" && (
-						<ChatContent repoData={repoData} isInitializing={isInitializing} />
-					)}
-					{activeTab === "settings" && <SettingsContent />}
+						{/* Tab内容 */}
+						<TabsContent value="chat" className="flex-1 min-h-0 ">
+							<ChatContent
+								repoData={repoData}
+								isInitializing={isInitializing}
+							/>
+						</TabsContent>
+						<TabsContent value="settings" className="flex-1 min-h-0">
+							<SettingsContent />
+						</TabsContent>
+					</Tabs>
 				</div>
 			</div>
 		</>

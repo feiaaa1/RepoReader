@@ -12,5 +12,8 @@ export default defineConfig({
 				"@": path.resolve(__dirname, "./src"),
 			},
 		},
+		define: {
+			'import.meta.env.GITHUB_TOKEN': JSON.stringify(process.env.GITHUB_TOKEN),
+		},
 	}),
 });
