@@ -68,6 +68,7 @@ export function RepoReaderWidget() {
 						"group relative shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out",
 						"rounded-full w-12 h-6",
 						"transform hover:scale-105 active:scale-95",
+						"bg-white hover:bg-gray-50",
 						isOpen && "shadow-xl scale-105",
 						isInitializing && "animate-pulse"
 					)}
@@ -100,7 +101,7 @@ export function RepoReaderWidget() {
 						: "opacity-0 scale-0 translate-x-4 -translate-y-4 pointer-events-none"
 				)}
 			>
-				<div className="bg-white rounded-lg shadow-2xl border border-gray-200 w-80 h-[700px] flex flex-col">
+				<div className="bg-white rounded-lg shadow-2xl border border-gray-200 w-96 h-[700px] flex flex-col">
 					<Tabs
 						value={activeTab}
 						onValueChange={setActiveTab}
@@ -142,15 +143,27 @@ export function RepoReaderWidget() {
 						</div>
 
 						{/* Tab内容 */}
-						<TabsContent value="chat" className="flex-1 min-h-0 ">
-							<ChatContent
-								repoData={repoData}
-								isInitializing={isInitializing}
-							/>
-						</TabsContent>
-						<TabsContent value="settings" className="flex-1 min-h-0">
-							<SettingsContent />
-						</TabsContent>
+						<div className="flex-1 min-h-0 relative">
+							<div
+								className={cn(
+									"absolute inset-0 flex flex-col",
+									activeTab === "chat" ? "block" : "hidden"
+								)}
+							>
+								<ChatContent
+									repoData={repoData}
+									isInitializing={isInitializing}
+								/>
+							</div>
+							<div
+								className={cn(
+									"absolute inset-0 flex flex-col",
+									activeTab === "settings" ? "block" : "hidden"
+								)}
+							>
+								<SettingsContent />
+							</div>
+						</div>
 					</Tabs>
 				</div>
 			</div>
