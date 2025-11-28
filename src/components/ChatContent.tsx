@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Copy, Check } from "lucide-react";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "../utils/cn";
 import { Message, RepoData } from "../types";
 import { generateRepoAnalysis } from "../services/github";
@@ -35,21 +36,33 @@ export function ChatContent({ repoData, isInitializing }: ChatContentProps) {
 	const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
 		null
 	);
+	const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const isAnalysisTriggeredRef = useRef(false);
 
 	const { apiKey, selectedModel, userProfile, knowledgeBase } =
 		useSettingsStore();
 
 	// 当仓库数据加载完成时，自动发送项目分析请求
 	useEffect(() => {
-		console.log("repoData changed:", repoData);
-		if (repoData && !isInitializing && apiKey && selectedModel) {
+		if (
+			repoData &&
+			!isInitializing &&
+			apiKey &&
+			selectedModel &&
+			!isAnalysisTriggeredRef.current
+		) {
+			isAnalysisTriggeredRef.current = true;
+
 			// 生成项目分析报告
 			const analysisReport = generateRepoAnalysis(repoData);
 
+			console.log("[analysisReport]：", analysisReport);
+
 			// 构建前置知识讲解的提示词
-			const knowledgePrompt = `# Role & Goal
-你是一名资深的软件架构师和技术导师，擅长根据学员的技术背景，为其量身定制学习路径。你的任务是基于一份项目分析报告和学员的个人情况，精准识别出学员在理解该项目时可能遇到的所有知识盲区和概念障碍，并提供一个清晰、结构化的"前置知识讲解"清单。
+			const knowledgePrompt = `
+# Role & Goal
+你是一名资深的软件架构师和技术导师，擅长根据学员的技术背景，为其量身定制学习路径。你的任务是基于一份项目分析报告和学员的个人情况，精准识别出学员在理解该项目时可能遇到的所有知识盲区和概念障碍，并提供一个清晰、结构化的"前置知识讲解"和"项目宏观解读"清单。
 
 ---
 
@@ -102,13 +115,13 @@ ${knowledgeBase || "未提供具体技术背景信息"}
                - 从分析报告和 README 中提炼项目的亮点和可能存在的难点。例如，亮点可以是"默认安全，有效防止 XSS 攻击"、"插件化架构，扩展性强"；挑战可以是"处理复杂的 Markdown 嵌套和自定义组件的性能问题"、"确保对 CommonMark 规范的完全兼容"等。
 
 3. **输出格式 (Formatting)**:
-   - 使用清晰的 Markdown 格式。
-   - **第一部分**的顶级标题为 \`💡 前置知识讲解\`。
-   - **第二部分**的顶级标题为 \`🚀 项目宏观解读\`。
-   - 每个知识点使用二级标题（\`##\`）或三级标题（\`###\`）进行组织。
+   - 使用准确且清晰的 Markdown 格式。
+   - **第一部分**的顶级标题为一级标题 \`💡 前置知识讲解\`。
+   - **第二部分**的顶级标题为一级标题 \`🚀 项目宏观解读\`。
+   - 每个知识点使用二级标题或三级标题进行组织。
    - 对每个知识点的解释应该简洁明了，控制在 2-4 句话内，目的是"扫盲"，而不是"教学"。
    - 如果一个术语有多种含义，请结合项目背景进行解释。
-   - 项目宏观解读部分的三个小节应使用三级标题（\`###\`）进行组织。
+   - 项目宏观解读部分的三个小节应使用三级标题进行组织。
 
 ---
 
@@ -121,8 +134,6 @@ ${knowledgeBase || "未提供具体技术背景信息"}
 
 	// 自动分析函数
 	const handleAutoAnalysis = async (prompt: string) => {
-		console.log("prompt", prompt);
-
 		const analysisMessageId = "analysis-" + Date.now();
 		const analysisMessage: Message = {
 			id: analysisMessageId,
@@ -190,6 +201,20 @@ ${knowledgeBase || "未提供具体技术背景信息"}
 		} finally {
 			setIsLoading(false);
 			setStreamingMessageId(null);
+		}
+	};
+
+	// 复制消息内容到剪贴板
+	const handleCopyMessage = async (content: string, messageId: string) => {
+		try {
+			await navigator.clipboard.writeText(content);
+			setCopiedMessageId(messageId);
+			// 2秒后重置复制状态
+			setTimeout(() => {
+				setCopiedMessageId(null);
+			}, 2000);
+		} catch (error) {
+			console.error("复制失败:", error);
 		}
 	};
 
@@ -269,11 +294,6 @@ ${knowledgeBase || "未提供具体技术背景信息"}
 		}
 	};
 
-	// 自动滚动到底部
-	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages]);
-
 	return (
 		<div className="flex flex-col h-full">
 			{/* 消息列表 */}
@@ -282,7 +302,7 @@ ${knowledgeBase || "未提供具体技术背景信息"}
 					<div
 						key={message.id}
 						className={cn(
-							"flex gap-3",
+							"flex gap-3 group",
 							message.role === "user" ? "justify-end" : "justify-start"
 						)}
 					>
@@ -292,34 +312,69 @@ ${knowledgeBase || "未提供具体技术背景信息"}
 							</div>
 						)}
 
-						<div
-							className={cn(
-								"max-w-[280px] rounded-lg px-3 py-2 text-sm",
-								message.role === "user"
-									? "bg-blue-600 text-white"
-									: "bg-gray-100 text-gray-900",
-								streamingMessageId === message.id && "animate-pulse"
-							)}
-						>
-							{message.role === "assistant" ? (
-								<div
+						<div className="relative">
+							<div
+								className={cn(
+									"max-w-[280px] rounded-lg px-3 py-2 text-sm",
+									message.role === "user"
+										? "bg-blue-600 text-white"
+										: "bg-gray-100 text-gray-900",
+									streamingMessageId === message.id && "animate-pulse"
+								)}
+							>
+								{message.role === "assistant" ? (
+									<div
+										className={cn(
+											"markdown-content",
+											"prose prose-sm max-w-none",
+											"prose-headings:text-gray-900 prose-headings:font-semibold prose-headings:mt-6 prose-headings:mb-3",
+											"prose-p:text-gray-900 prose-p:leading-relaxed prose-p:mb-4",
+											"prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1 prose-code:rounded prose-code:text-sm",
+											"prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-pre:p-4 prose-pre:rounded-lg prose-pre:overflow-x-auto",
+											"prose-blockquote:border-l-blue-500 prose-blockquote:text-gray-700 prose-blockquote:bg-blue-50 prose-blockquote:p-4 prose-blockquote:rounded",
+											"prose-strong:text-gray-900 prose-strong:font-semibold",
+											"prose-ul:text-gray-900 prose-ul:mb-4 prose-ul:pl-6",
+											"prose-ol:text-gray-900 prose-ol:mb-4 prose-ol:pl-6",
+											"prose-li:text-gray-900 prose-li:mb-1",
+											"prose-a:text-blue-600 prose-a:underline hover:prose-a:text-blue-800",
+											"prose-table:border prose-table:border-gray-200 prose-table:rounded-lg",
+											"prose-th:bg-gray-50 prose-th:font-semibold prose-th:p-3 prose-th:border-b",
+											"prose-td:p-3 prose-td:border-b prose-td:border-gray-200"
+										)}
+									>
+										<Markdown remarkPlugins={[remarkGfm]}>
+											{message.content}
+										</Markdown>
+									</div>
+								) : (
+									<p className="text-white">{message.content}</p>
+								)}
+							</div>
+
+							{/* 复制按钮 - 在hover时显示 */}
+							<div className="absolute -bottom-8 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+								<button
+									onClick={() => handleCopyMessage(message.content, message.id)}
 									className={cn(
-										"prose prose-sm max-w-none",
-										"prose-headings:text-gray-900 prose-headings:font-semibold",
-										"prose-p:text-gray-900 prose-p:leading-relaxed",
-										"prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1 prose-code:rounded",
-										"prose-pre:bg-gray-800 prose-pre:text-gray-100",
-										"prose-blockquote:border-l-blue-500 prose-blockquote:text-gray-700",
-										"prose-strong:text-gray-900 prose-strong:font-semibold",
-										"prose-ul:text-gray-900 prose-ol:text-gray-900",
-										"prose-li:text-gray-900"
+										"flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-colors",
+										"bg-white border border-gray-200 text-gray-600 hover:bg-gray-50",
+										"shadow-sm"
 									)}
+									title="复制原始内容"
 								>
-									<Markdown>{message.content}</Markdown>
-								</div>
-							) : (
-								<p className="text-white">{message.content}</p>
-							)}
+									{copiedMessageId === message.id ? (
+										<>
+											<Check className="w-3 h-3 text-green-600" />
+											<span className="text-green-600">已复制</span>
+										</>
+									) : (
+										<>
+											<Copy className="w-3 h-3" />
+											<span>复制</span>
+										</>
+									)}
+								</button>
+							</div>
 						</div>
 
 						{message.role === "user" && (

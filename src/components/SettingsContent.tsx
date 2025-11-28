@@ -25,12 +25,6 @@ export function SettingsContent() {
 	} = useSettingsStore();
 
 	const handleSave = () => {
-		console.log("保存设置:", {
-			apiKey,
-			selectedModel,
-			userProfile,
-			knowledgeBase,
-		});
 		alert("设置已保存到本地存储！");
 	};
 
@@ -45,12 +39,12 @@ export function SettingsContent() {
 							<SelectValue placeholder="选择AI模型" />
 						</SelectTrigger>
 						<SelectContent>
-								<SelectItem value="deepseek-chat">DeepSeek Chat</SelectItem>
-								<SelectItem value="gpt-4">GPT-4</SelectItem>
-								<SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-								<SelectItem value="claude-3">Claude 3</SelectItem>
-								<SelectItem value="gemini-pro">Gemini Pro</SelectItem>
-							</SelectContent>
+							<SelectItem value="deepseek-chat">DeepSeek Chat</SelectItem>
+							<SelectItem value="gpt-4">GPT-4</SelectItem>
+							<SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+							<SelectItem value="claude-3">Claude 3</SelectItem>
+							<SelectItem value="gemini-pro">Gemini Pro</SelectItem>
+						</SelectContent>
 					</Select>
 				</div>
 

@@ -11,7 +11,7 @@ function App() {
 		setIsLoading(true);
 		try {
 			// 这里将来会添加分析仓库的逻辑
-			console.log("分析仓库:", url);
+			console.log("[analysisRepo]：", url);
 			// 模拟异步操作
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 			alert("仓库分析完成！");
@@ -35,7 +35,7 @@ function App() {
 						placeholder="输入GitHub仓库URL..."
 						value={url}
 						onChange={(e) => setUrl(e.target.value)}
-						className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+						className="w-full px-3 py-2 border border-gray-300 rounded-md focus: focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 					/>
 					<button
 						onClick={handleAnalyze}
@@ -47,7 +47,9 @@ function App() {
 				</div>
 
 				<div className="mt-6">
-					<h3 className="text-lg font-semibold text-gray-800 mb-3">功能特性：</h3>
+					<h3 className="text-lg font-semibold text-gray-800 mb-3">
+						功能特性：
+					</h3>
 					<ul className="space-y-2 text-sm text-gray-600">
 						<li className="flex items-center">
 							<span className="mr-2">🤖</span>

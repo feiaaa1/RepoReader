@@ -47,16 +47,29 @@ export const getRepoReadme = async (
 	repo: string,
 	branch: string = "main"
 ): Promise<string> => {
+	const branches = ["main", "master"];
+	
 	try {
-		const { data } = await octokit.rest.repos.getReadme({
-			owner,
-			repo,
-			ref: branch,
-		});
+		for (const branchName of branches) {
+			try {
+				const { data } = await octokit.rest.repos.getReadme({
+					owner,
+					repo,
+					ref: branchName,
+				});
 
-		// 解码base64内容
-		const content = atob(data.content);
-		return content;
+				// 解码base64内容
+				const content = atob(data.content);
+				return content;
+			} catch (branchError) {
+				// 如果当前分支失败，继续尝试下一个分支
+				console.warn(`尝试分支 ${branchName} 失败:`, branchError);
+				continue;
+			}
+		}
+		
+		// 如果所有分支都失败了
+		throw new Error("所有分支都无法获取README");
 	} catch (error) {
 		console.error("获取README失败:", error);
 		return "无法获取README文件";
