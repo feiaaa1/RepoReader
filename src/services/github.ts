@@ -48,7 +48,7 @@ export const getRepoReadme = async (
 	branch: string = "main"
 ): Promise<string> => {
 	const branches = ["main", "master"];
-	
+
 	try {
 		for (const branchName of branches) {
 			try {
@@ -58,8 +58,19 @@ export const getRepoReadme = async (
 					ref: branchName,
 				});
 
-				// 解码base64内容
-				const content = atob(data.content);
+				// 解码base64内容，正确处理UTF-8编码
+				const base64Content = data.content.replace(/\s/g, ""); // 移除空白字符
+				const binaryString = atob(base64Content);
+
+				// 将二进制字符串转换为Uint8Array
+				const bytes = new Uint8Array(binaryString.length);
+				for (let i = 0; i < binaryString.length; i++) {
+					bytes[i] = binaryString.charCodeAt(i);
+				}
+
+				// 使用TextDecoder正确解码UTF-8
+				const decoder = new TextDecoder("utf-8");
+				const content = decoder.decode(bytes);
 				return content;
 			} catch (branchError) {
 				// 如果当前分支失败，继续尝试下一个分支
@@ -67,7 +78,7 @@ export const getRepoReadme = async (
 				continue;
 			}
 		}
-		
+
 		// 如果所有分支都失败了
 		throw new Error("所有分支都无法获取README");
 	} catch (error) {
@@ -82,15 +93,28 @@ export const getRepoStructure = async (
 	repo: string,
 	branch: string = "main"
 ): Promise<any[]> => {
-	try {
-		const { data } = await octokit.rest.git.getTree({
-			owner,
-			repo,
-			tree_sha: branch,
-			recursive: "true",
-		});
+	const branches = ["main", "master"];
 
-		return data.tree || [];
+	try {
+		for (const branchName of branches) {
+			try {
+				const { data } = await octokit.rest.git.getTree({
+					owner,
+					repo,
+					tree_sha: branchName,
+					recursive: "true",
+				});
+
+				return data.tree || [];
+			} catch (branchError) {
+				// 如果当前分支失败，继续尝试下一个分支
+				console.warn(`尝试分支 ${branchName} 失败:`, branchError);
+				continue;
+			}
+		}
+
+		// 如果所有分支都失败了
+		throw new Error("所有分支都无法获取仓库结构");
 	} catch (error) {
 		console.error("获取仓库结构失败:", error);
 		return [];
@@ -109,6 +133,12 @@ export const initializeRepoData = async (): Promise<RepoData | null> => {
 			getRepoReadme(repoInfo.owner, repoInfo.repo, repoInfo.branch),
 			getRepoStructure(repoInfo.owner, repoInfo.repo, repoInfo.branch),
 		]);
+
+		console.log("Repository Data:", {
+			repoInfo,
+			readme: readme,
+			structure: structure,
+		});
 
 		return {
 			repoInfo,

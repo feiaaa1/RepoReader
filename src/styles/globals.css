@@ -3,7 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-:root {
+:host {
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.145 0 0);
 	--card: oklch(1 0 0);
@@ -39,7 +39,7 @@
 	--sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
+:host(.dark) {
 	--background: oklch(0.145 0 0);
 	--foreground: oklch(0.985 0 0);
 	--card: oklch(0.145 0 0);
@@ -120,4 +120,44 @@
 	body {
 		@apply bg-background text-foreground;
 	}
+	
+	/* 恢复标题标签的默认样式 */
+	h1 {
+		@apply text-2xl font-bold;
+	}
+	h2 {
+		@apply text-xl font-semibold;
+	}
+	h3 {
+		@apply text-lg font-semibold;
+	}
+	h4 {
+		@apply text-base font-semibold;
+	}
+	h5 {
+		@apply text-sm font-semibold;
+	}
+	h6 {
+		@apply text-xs font-semibold;
+	}
+}
+
+/* 特殊的滚动条样式类 - 用于需要更细滚动条的组件 */
+:host .scrollbar-thin::-webkit-scrollbar {
+	width: 5px !important;
+	height: 5px !important;
+}
+
+:host .scrollbar-thin::-webkit-scrollbar-track {
+	background: transparent !important;
+	border: none !important;
+}
+
+:host .scrollbar-thin::-webkit-scrollbar-thumb {
+	background: rgba(156, 163, 175, 0.3) !important;
+	border-radius: 3px !important;
+}
+
+:host .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+	background: rgba(156, 163, 175, 0.6) !important;
 }

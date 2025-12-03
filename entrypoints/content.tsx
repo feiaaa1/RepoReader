@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { RepoReaderWidget } from "../src/components/RepoReaderWidget";
+import globalStyles from "../src/styles/globals.css?inline";
 import "../src/styles/globals.css";
 
 export default defineContentScript({
@@ -13,23 +14,37 @@ export default defineContentScript({
 			!window.location.pathname.includes("/notifications");
 
 		if (isRepoPage) {
-			const root = document.createElement("div");
-			root.id = "repo-reader-root";
-			root.style.position = "fixed";
-			root.style.top = "0";
-			root.style.right = "0";
-			root.style.zIndex = "10000";
-			// 重置所有样式，避免被页面样式影响
-			// root.style.all = "initial";
-			root.style.position = "fixed";
-			root.style.top = "0";
-			root.style.right = "0";
-			root.style.zIndex = "10000";
-			root.style.fontFamily =
+			const host = document.createElement("div");
+			host.id = "repo-reader-host";
+			host.style.position = "fixed";
+			host.style.top = "0";
+			host.style.right = "0";
+			host.style.zIndex = "10000";
+
+			const shadowRoot = host.attachShadow({ mode: "open" });
+
+			const shadowContainer = document.createElement("div");
+			shadowContainer.id = "repo-reader-container";
+			shadowContainer.style.position = "fixed";
+			shadowContainer.style.top = "0";
+			shadowContainer.style.right = "0";
+			shadowContainer.style.zIndex = "10000";
+			shadowContainer.style.fontFamily =
 				"Inter, system-ui, Avenir, Helvetica, Arial, sans-serif";
 
-			document.body.appendChild(root);
-			ReactDOM.createRoot(root).render(<RepoReaderWidget />);
+			// 创建样式元素
+			const styleElement = document.createElement("style");
+			styleElement.textContent = globalStyles;
+
+			// 将样式和容器添加到 Shadow DOM
+			shadowRoot.appendChild(styleElement);
+			shadowRoot.appendChild(shadowContainer);
+
+			// 将宿主元素添加到页面
+			document.body.appendChild(host);
+
+			// 在 Shadow DOM 内渲染 React 应用
+			ReactDOM.createRoot(shadowContainer).render(<RepoReaderWidget />);
 		}
 	},
 });

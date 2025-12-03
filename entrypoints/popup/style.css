@@ -1,41 +1,41 @@
-@import url('../../src/styles/typography.css');
+@import url("../../src/styles/typography.css");
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+	line-height: 1.5;
+	font-weight: 400;
 
-  color-scheme: light;
-  color: #213547;
-  background-color: #ffffff;
+	color-scheme: light;
+	color: #213547;
+	background-color: #ffffff;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
+	font-synthesis: none;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-text-size-adjust: 100%;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+	margin: 0;
+	min-width: 320px;
+	min-height: 100vh;
 }
 
 /* 重置一些可能冲突的样式 */
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 /* 确保扩展容器不受页面样式影响 */
-#repo-reader-widget {
-  all: initial;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  color: #213547;
-  background-color: #ffffff;
+#repo-reader-root {
+	all: initial;
+	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+	line-height: 1.5;
+	color: #213547;
+	background-color: #ffffff;
 }
 
-#repo-reader-widget * {
-  box-sizing: border-box;
+#repo-reader-root * {
+	box-sizing: border-box;
 }

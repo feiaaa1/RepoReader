@@ -3,6 +3,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
+import { Switch } from "./ui/switch";
 import {
 	Select,
 	SelectContent,
@@ -18,10 +19,12 @@ export function SettingsContent() {
 		selectedModel,
 		userProfile,
 		knowledgeBase,
+		autoAnalysis,
 		setApiKey,
 		setSelectedModel,
 		setUserProfile,
 		setKnowledgeBase,
+		setAutoAnalysis,
 	} = useSettingsStore();
 
 	const handleSave = () => {
@@ -30,7 +33,7 @@ export function SettingsContent() {
 
 	return (
 		<div className="flex flex-col h-full">
-			<div className="flex-1 overflow-y-auto p-4 space-y-6">
+				<div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin">
 				{/* AI模型选择 */}
 				<div className="space-y-2">
 					<Label>AI模型</Label>
@@ -78,15 +81,31 @@ export function SettingsContent() {
 				</div>
 
 				{/* 知识储备描述 */}
-				<div className="space-y-2">
-					<Label>前置知识储备描述</Label>
-					<Textarea
-						value={knowledgeBase}
-						onChange={(e) => setKnowledgeBase(e.target.value)}
-						placeholder="描述你的技术背景和已掌握的知识..."
-						rows={4}
-					/>
-				</div>
+					<div className="space-y-2">
+						<Label>前置知识储备描述</Label>
+						<Textarea
+							value={knowledgeBase}
+							onChange={(e) => setKnowledgeBase(e.target.value)}
+							placeholder="描述你的技术背景和已掌握的知识..."
+							rows={4}
+						/>
+					</div>
+
+					{/* 自动分析设置 */}
+					<div className="space-y-2">
+						<div className="flex items-center justify-between">
+							<div className="space-y-1">
+								<Label>自动分析GitHub仓库</Label>
+								<p className="text-sm text-gray-500">
+									开启后，识别到GitHub仓库时会自动开始分析。关闭后需要手动点击分析按钮。
+								</p>
+							</div>
+							<Switch
+								checked={autoAnalysis}
+								onCheckedChange={setAutoAnalysis}
+							/>
+						</div>
+					</div>
 			</div>
 
 			{/* 保存按钮 */}

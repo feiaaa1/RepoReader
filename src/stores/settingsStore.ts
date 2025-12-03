@@ -6,10 +6,12 @@ export interface SettingsState {
     selectedModel: string;
     userProfile: string;
     knowledgeBase: string;
+    autoAnalysis: boolean;
     setApiKey: (apiKey: string) => void;
     setSelectedModel: (model: string) => void;
     setUserProfile: (profile: string) => void;
     setKnowledgeBase: (knowledge: string) => void;
+    setAutoAnalysis: (autoAnalysis: boolean) => void;
     resetSettings: () => void;
 }
 
@@ -18,6 +20,7 @@ const initialState = {
     selectedModel: '',
     userProfile: '',
     knowledgeBase: '',
+    autoAnalysis: false,
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -28,6 +31,7 @@ export const useSettingsStore = create<SettingsState>()(
             setSelectedModel: (selectedModel: string) => set({ selectedModel }),
             setUserProfile: (userProfile: string) => set({ userProfile }),
             setKnowledgeBase: (knowledgeBase: string) => set({ knowledgeBase }),
+            setAutoAnalysis: (autoAnalysis: boolean) => set({ autoAnalysis }),
             resetSettings: () => set(initialState),
         }),
         {

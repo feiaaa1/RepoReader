@@ -1,4 +1,4 @@
-import "../assets/tailwind.css";
+import "./styles/globals.css";
 import { RepoReaderWidget } from "@/components/RepoReaderWidget";
 
 export default function App() {

@@ -2,7 +2,7 @@ import { RepoData } from "../types";
 
 export interface ChatRequest {
 	message: string;
-	repoData?: RepoData;
+	repoData?: RepoData | null;
 	userProfile?: string;
 	knowledgeBase?: string;
 }
@@ -17,7 +17,7 @@ const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 // 生成系统提示词
 function generateSystemPrompt(
-	repoData?: RepoData,
+	repoData?: RepoData | null,
 	userProfile?: string,
 	knowledgeBase?: string
 ): string {
@@ -76,10 +76,11 @@ ${structure.length > 20 ? `\n... 还有 ${structure.length - 20} 个文件` : ""
 // 发送聊天请求到 DeepSeek API
 export async function sendChatRequest(
 	apiKey: string,
-	request: ChatRequest
+	request: ChatRequest,
+	abortController?: AbortController
 ): Promise<ReadableStream<Uint8Array>> {
 	const systemPrompt = generateSystemPrompt(
-		request.repoData,
+		request.repoData ?? undefined,
 		request.userProfile,
 		request.knowledgeBase
 	);
@@ -106,6 +107,7 @@ export async function sendChatRequest(
 			temperature: 0.7,
 			max_tokens: 5000,
 		}),
+		signal: abortController?.signal,
 	});
 
 	if (!response.ok) {

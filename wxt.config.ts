@@ -1,7 +1,6 @@
 import { defineConfig } from "wxt";
 import path from "path";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 
 // 增加 EventEmitter 最大监听器数量限制
 process.setMaxListeners(20);
@@ -10,14 +9,14 @@ process.setMaxListeners(20);
 export default defineConfig({
 	modules: ["@wxt-dev/module-react"],
 	vite: () => ({
-		plugins: [react(), tailwindcss()],
+		plugins: [react()],
 		resolve: {
 			alias: {
 				"@": path.resolve(__dirname, "./src"),
 			},
 		},
 		define: {
-			'import.meta.env.GITHUB_TOKEN': JSON.stringify(process.env.GITHUB_TOKEN),
+			"import.meta.env.GITHUB_TOKEN": JSON.stringify(process.env.GITHUB_TOKEN),
 		},
 	}),
 });
