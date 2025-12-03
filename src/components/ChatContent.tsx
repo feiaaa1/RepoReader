@@ -749,8 +749,17 @@ ${knowledgeBase || "未提供具体技术背景信息"}
 												code: ({ node, className, children, ...props }) => {
 													const content = String(children).replace(/\n$/, "");
 
+													// 2. 核心判断：检查是否有 language- 开头的类名
+													const match = /language-(\w+)/.exec(className || "");
+
+													const isInline = !match;
+
 													return (
-														<CodeBlock className={className} {...props}>
+														<CodeBlock
+															className={className}
+															{...props}
+															inline={isInline}
+														>
 															{content}
 														</CodeBlock>
 													);

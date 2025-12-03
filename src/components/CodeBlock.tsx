@@ -1,41 +1,35 @@
-// CodeBlock.tsx - 专注于块级代码渲染
 import React, { useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Copy, Check } from "lucide-react";
 import { cn } from "../utils/cn";
-// 导入所有可能的 HTML 属性，以便 CodeBlock 可以接受它们
-import { HTMLAttributes } from "react";
 
-// 接口调整：移除 inline，并继承 HTMLAttributes，接受 react-markdown 传递的 className
-interface CodeBlockProps extends HTMLAttributes<HTMLDivElement> {
-	// children 是 SyntaxHighlighter 的内容，通常是字符串
+interface CodeBlockProps {
 	children: string;
-	// className 用于提取 language
 	className?: string;
-	// node 是 AST 节点，必须被接收但不能传给 DOM
-	node?: any;
+	inline?: boolean;
 }
 
-// 重点：CodeBlock 现在只处理块级代码的渲染逻辑
-export function CodeBlock({
-	children,
-	className = "",
-	node,
-	...props
-}: CodeBlockProps) {
+export function CodeBlock({ children, className, inline }: CodeBlockProps) {
 	const [copied, setCopied] = useState(false);
 
-	// 从 className 中提取语言信息
-	const match = /language-(\w+)/.exec(className);
+	// 从className中提取语言信息
+	const match = /language-(\w+)/.exec(className || "");
 	const language = match ? match[1] : "";
+
+	// 如果是内联代码，使用简单的样式
+	if (inline) {
+		return (
+			<code className="bg-blue-50 text-blue-600 px-1 py-0.5 rounded text-sm font-mono">
+				{children}
+			</code>
+		);
+	}
 
 	// 复制代码到剪贴板
 	const handleCopy = async () => {
 		try {
-			// 块级代码内容通常带有一个末尾的换行符，需要去除
-			const contentToCopy = children.replace(/\n$/, "");
-			await navigator.clipboard.writeText(contentToCopy);
+			await navigator.clipboard.writeText(children);
 			setCopied(true);
 			setTimeout(() => setCopied(false), 2000);
 		} catch (error) {
@@ -44,12 +38,8 @@ export function CodeBlock({
 	};
 
 	return (
-		// 使用 className 和 props，但不包括 node
-		<div
-			className={cn("relative group my-4 w-full overflow-hidden", className)}
-			{...props}
-		>
-			{/* 语言标签和复制按钮 (保留不变) */}
+		<div className="relative group my-4 w-full overflow-hidden">
+			{/* 语言标签和复制按钮 */}
 			<div className="flex items-center justify-between bg-gray-800 text-gray-300 px-4 py-2 text-sm rounded-t-lg">
 				<span className="font-mono text-xs">{language || "code"}</span>
 				<button
@@ -75,7 +65,7 @@ export function CodeBlock({
 				</button>
 			</div>
 
-			{/* 代码内容 (保留不变) */}
+			{/* 代码内容 */}
 			<div className="relative overflow-hidden rounded-b-lg scrollbar-thin">
 				<SyntaxHighlighter
 					language={language}
@@ -100,7 +90,7 @@ export function CodeBlock({
 					wrapLines={true}
 					wrapLongLines={true}
 				>
-					{children.replace(/\n$/, "")}
+					{children}
 				</SyntaxHighlighter>
 			</div>
 		</div>
