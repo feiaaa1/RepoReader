@@ -284,8 +284,6 @@ ${knowledgeBase || "未提供具体技术背景信息"}
 	const handleManualAnalysis = async () => {
 		if (!repoData || !apiKey || !selectedModel || isLoading) return;
 
-		isAnalysisTriggeredRef.current = true;
-
 		// 生成项目分析报告
 		const analysisReport = generateRepoAnalysis(repoData);
 
@@ -882,19 +880,17 @@ ${knowledgeBase || "未提供具体技术背景信息"}
 							"发送"
 						)}
 					</Button>
-					{/* 手动分析按钮 - 仅在未开启自动分析且分析准备就绪时显示 */}
-					{!autoAnalysis &&
-						isAnalysisReady &&
-						!isAnalysisTriggeredRef.current && (
-							<Button
-								variant={"default"}
-								onClick={handleManualAnalysis}
-								disabled={isLoading}
-								className="bg-blue-600 hover:bg-blue-700 text-white"
-							>
-								分析
-							</Button>
-						)}
+					{/* 分析按钮 - 一直显示 */}
+					{isAnalysisReady && (
+						<Button
+							variant={"default"}
+							onClick={handleManualAnalysis}
+							disabled={isLoading}
+							className="bg-blue-600 hover:bg-blue-700 text-white"
+						>
+							分析
+						</Button>
+					)}
 				</div>
 			</div>
 		</div>

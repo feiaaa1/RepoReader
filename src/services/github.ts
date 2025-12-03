@@ -229,7 +229,7 @@ ${Object.entries(fileTypes)
 	.join("\n")}
 
 ### 📖 README概览
-${readme.length > 500 ? readme.substring(0, 500) + "..." : readme}
+${readme}
 
 ---
 💡 **提示**: 你可以询问我关于这个项目的任何问题，比如：

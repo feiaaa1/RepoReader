@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MessageCircle, Settings, ChevronDown } from "lucide-react";
+import { MessageCircle, Settings, ChevronDown, History } from "lucide-react";
 import { cn } from "../utils/cn";
 import { RepoData } from "../types";
 import { initializeRepoData } from "../services/github";
 import { ChatContent } from "./ChatContent";
 import { SettingsContent } from "./SettingsContent";
+import { HistoryContent } from "./HistoryContent";
 import { Button } from "./ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 
@@ -216,17 +217,21 @@ export function RepoReaderWidget() {
 						className="flex flex-col h-full"
 					>
 						{/* Tab导航 */}
-						<div className="flex items-center justify-between p-4 border-b border-gray-200">
-							<TabsList>
-								<TabsTrigger value="chat">
-									<MessageCircle className="w-4 h-4" />
-									对话
-								</TabsTrigger>
-								<TabsTrigger value="settings">
-									<Settings className="w-4 h-4" />
-									设置
-								</TabsTrigger>
-							</TabsList>
+							<div className="flex items-center justify-between p-4 border-b border-gray-200">
+								<TabsList>
+									<TabsTrigger value="chat">
+										<MessageCircle className="w-4 h-4" />
+										对话
+									</TabsTrigger>
+									<TabsTrigger value="history">
+										<History className="w-4 h-4" />
+										历史
+									</TabsTrigger>
+									<TabsTrigger value="settings">
+										<Settings className="w-4 h-4" />
+										设置
+									</TabsTrigger>
+								</TabsList>
 							<Button
 								onClick={handleClose}
 								variant="ghost"
@@ -251,27 +256,35 @@ export function RepoReaderWidget() {
 						</div>
 
 						{/* Tab内容 */}
-						<div className="flex-1 min-h-0 relative">
-							<div
-								className={cn(
-									"absolute inset-0 flex flex-col",
-									activeTab === "chat" ? "block" : "hidden"
-								)}
-							>
-								<ChatContent
-									repoData={repoData}
-									isInitializing={isInitializing}
-								/>
+							<div className="flex-1 min-h-0 relative">
+								<div
+									className={cn(
+										"absolute inset-0 flex flex-col",
+										activeTab === "chat" ? "block" : "hidden"
+									)}
+								>
+									<ChatContent
+										repoData={repoData}
+										isInitializing={isInitializing}
+									/>
+								</div>
+								<div
+									className={cn(
+										"absolute inset-0 flex flex-col",
+										activeTab === "history" ? "block" : "hidden"
+									)}
+								>
+									<HistoryContent />
+								</div>
+								<div
+									className={cn(
+										"absolute inset-0 flex flex-col",
+										activeTab === "settings" ? "block" : "hidden"
+									)}
+								>
+									<SettingsContent />
+								</div>
 							</div>
-							<div
-								className={cn(
-									"absolute inset-0 flex flex-col",
-									activeTab === "settings" ? "block" : "hidden"
-								)}
-							>
-								<SettingsContent />
-							</div>
-						</div>
 					</Tabs>
 				</div>
 			</div>
